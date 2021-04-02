@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "453802252824",
+    "firebase_url": "https://linhas-62812-default-rtdb.firebaseio.com",
+    "project_id": "linhas-62812",
+    "storage_bucket": "linhas-62812.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:453802252824:android:0126252f06f47e5a88016d",
+        "android_client_info": {
+          "package_name": "com.eveluizsan.projeto"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "453802252824-omnl0k8207vlk6mjhl3l6hpstd0k18l1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbRqI5q-nCBAb8JSQffpmcPlnTNVDfTgY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "453802252824-omnl0k8207vlk6mjhl3l6hpstd0k18l1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
