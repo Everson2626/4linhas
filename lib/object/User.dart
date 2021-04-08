@@ -1,6 +1,5 @@
 import 'dart:core';
 
-
 class UserPlayer {
 
   UserPlayer(){

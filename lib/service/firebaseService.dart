@@ -1,12 +1,18 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:projeto/object/Establishment.dart';
 import 'package:projeto/object/User.dart';
+import 'package:projeto/object/Match.dart';
 import 'package:projeto/service/firebaseService.dart';
 import 'package:projeto/ui/Cadastro_Page.dart';
 import 'package:projeto/ui/home_player.dart';
 
 class FirebaseService {
   FirebaseAuth auth = FirebaseAuth.instance;
+  final databaseReference = FirebaseDatabase.instance.reference();
+  final firestoreInstance = FirebaseFirestore.instance;
   BuildContext get context => null;
 
   void cadastro(UserPlayer player) async {
@@ -52,6 +58,36 @@ class FirebaseService {
       return false;
     }
   }
+
+  void createEstablishment(Establishment establishment) async{
+    await firestoreInstance.collection("Establishment").add(
+        {
+          "nome": establishment.nome,
+          "endereco": establishment.endereco,
+        }).then((value) {
+      print(value.id);
+    });
+  }
+  void createMatch(Match match) {
+    firestoreInstance.collection("match").add(
+        {
+          "nome": match.nome,
+          "preco": match.preco,
+          "data": match.data,
+        }).then((value) {
+      print(value.id);
+    });
+  }
+
+  void getMatch(){
+    firestoreInstance.collection("users").get().then((querySnapshot) {
+      querySnapshot.docs.forEach((result) {
+        print(result.data());
+      });
+    });
+  }
+
+
 
   void mensagem(String mensagem) {
     showDialog(

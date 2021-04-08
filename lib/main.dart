@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:projeto/ui/Cadastro_Page.dart';
 import 'package:projeto/ui/Create_Match.dart';
+import 'package:projeto/ui/Establishment_Page.dart';
 import 'package:projeto/ui/Login_Page.dart';
 import 'package:projeto/ui/home_player.dart';
 
@@ -16,6 +17,7 @@ Future<void> main() async {
       '/cadastro_page': (context) => CadastroPage(),
       '/home_page': (context) => HomePlayer(),
       '/create_match': (context) => CreateMatchPage(),
+      '/create_establishment': (context) => EstablishmentPage(),
     },
     title: "4 Linhas",
   ));

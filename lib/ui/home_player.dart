@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:projeto/service/firebaseService.dart';
 import 'package:projeto/ui/Create_Match.dart';
+import 'package:projeto/ui/Establishment_Page.dart';
 
 class HomePlayer extends StatefulWidget {
   @override
@@ -9,6 +11,10 @@ class HomePlayer extends StatefulWidget {
 int _index = 1;
 
 class _HomePlayerState extends State<HomePlayer> {
+  FirebaseService firebaseService;
+  @override
+  void initState() {
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +50,7 @@ class _HomePlayerState extends State<HomePlayer> {
         onPressed: () {
           Navigator.push(context,
             MaterialPageRoute(
-                builder: (context) => CreateMatchPage()
+                builder: (context) => EstablishmentPage()
             ),
           );
         },
@@ -277,4 +283,6 @@ class _HomePlayerState extends State<HomePlayer> {
       ),
     );
   }
+
+
 }
