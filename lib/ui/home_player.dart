@@ -1,7 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:projeto/service/firebaseService.dart';
-import 'package:projeto/ui/Create_Match.dart';
-import 'package:projeto/ui/Establishment_Page.dart';
+import 'file:///C:/Users/Pichau/AndroidStudioProjects/projeto/lib/ui/partida/Create_Match.dart';
+import 'file:///C:/Users/Pichau/AndroidStudioProjects/projeto/lib/ui/estabelecimento/Create_Establishment.dart';
 
 class HomePlayer extends StatefulWidget {
   @override
@@ -10,15 +11,19 @@ class HomePlayer extends StatefulWidget {
 
 int _index = 1;
 
+
 class _HomePlayerState extends State<HomePlayer> {
-  FirebaseService firebaseService;
+  List<Match> match;
+  FirebaseService firebaseService = FirebaseService();
+  final firestoreInstance = FirebaseFirestore.instance;
+
   @override
   void initState() {
+
   }
 
   @override
   Widget build(BuildContext context) {
-
     Widget child;
 
     switch(_index){
@@ -45,18 +50,52 @@ class _HomePlayerState extends State<HomePlayer> {
       ),
 
       body: SizedBox.expand(child: child),
+      drawer: Drawer(
+        child: ListView(
+          // Important: Remove any padding from the ListView.
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            Container(
+              height: 60.0,
+              child: DrawerHeader(
+                child: Text(
+                  '4 LINHAS',
+                  style: TextStyle(
+                    fontSize: 20.0,
+                    color: Colors.white
+                  ),
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                ),
+                margin: EdgeInsets.all(0.0),
+                padding: EdgeInsets.all(0.0),
+              ),
+            ),
+            ListTile(
+              title: Text('Estabelecimentos'),
+              onTap: () {
+                Navigator.pushNamed(context, '/establishment');
+              },
+            ),
+            ListTile(
+              title: Text('Criar campo'),
+              onTap: () {
+                Navigator.pushNamed(context, '/create_campo');
+              },
+            ),
+          ],
+        ),
+      ),
 
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(context,
-            MaterialPageRoute(
-                builder: (context) => EstablishmentPage()
-            ),
-          );
+          Navigator.pushNamed(context, '/create_match');
         },
         child: const Icon(Icons.add),
         backgroundColor: Colors.green,
       ),
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,
         onTap: (newIndex) => setState(() => _index = newIndex),
@@ -172,8 +211,31 @@ class _HomePlayerState extends State<HomePlayer> {
               ],
             ),
           ),
-          jogo("Partida 1", "16/01/2021", 0.0, 2),
-          jogo("Partida 2", "23/01/2021", 15.0, 1)
+          StreamBuilder(
+            stream: FirebaseFirestore.instance.collection("match").snapshots(),
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              switch(snapshot.connectionState){
+                case ConnectionState.waiting:
+                  LinearProgressIndicator();
+                  break;
+                default:
+                  return ListView(
+                    scrollDirection: Axis.vertical,
+                    shrinkWrap: true,
+                    children: snapshot.data.docs.map<Widget>((DocumentSnapshot doc){
+                      return jogo(
+                        doc.data()['nome'],
+                        doc.data()['data'],
+                        doc.data()['preco'].toString(),
+                        2
+                      );
+                    }).toList(),
+                  );
+              }
+              return Text('');
+            },
+          ),
+
         ],
       ),
     );
@@ -198,13 +260,13 @@ class _HomePlayerState extends State<HomePlayer> {
       child: Column(
         children: [
           Text(dia, style: TextStyle(color: Colors.white, fontSize: 30.0),),
-          jogo("Partida", "16/01/2021", 0.0, 2),
+          jogo("Partida", "16/01/2021", "0.0", 2),
         ],
       ),
     );
   }
 
-  Widget jogo(String nome, String data, double preco, int km) {
+  Widget jogo(String nome, String data, String preco, int km) {
     return Card(
       child: Container(
         color: Colors.grey,
@@ -269,7 +331,9 @@ class _HomePlayerState extends State<HomePlayer> {
                                   fontSize: 20.0
                               ),
                             ),
-                            onTap: (){},
+                            onTap: (){
+                              firebaseService.getMatch();
+                            },
                           ),
                         )
                       ],

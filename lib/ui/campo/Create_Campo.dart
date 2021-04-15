@@ -1,35 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:projeto/object/Establishment.dart';
-import 'package:projeto/service/firebaseService.dart';
 
-class EstablishmentPage extends StatefulWidget {
+class CreateCampo extends StatefulWidget {
   @override
-  _State createState() => _State();
+  _CreateCampoState createState() => _CreateCampoState();
 }
 
-class _State extends State<EstablishmentPage> {
-
-  final nomeController = TextEditingController();
-  final enderecoController = TextEditingController();
-  FirebaseService firebaseService = FirebaseService();
-  Establishment establishment = Establishment();
+class _CreateCampoState extends State<CreateCampo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(20.0),
-          child: Container(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: Text(
+          "Cria campo",
+          style: TextStyle(
+            fontSize: 20.0,
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Container(
             padding: EdgeInsets.all(10.0 ),
             color: Colors.white,
             height: 400.0,
             child: Column(
               children: [
                 Container(
-                  padding: EdgeInsets.fromLTRB(0, 30, 0, 30),
                   child: Text(
-                    "ESTABELECIMENTO",
+                    "CADASTRO",
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 25.0,
@@ -40,7 +39,6 @@ class _State extends State<EstablishmentPage> {
                 Container(
                   padding: EdgeInsets.only(bottom: 15.0),
                   child: TextField(
-                    controller: nomeController,
                     keyboardType: TextInputType.visiblePassword,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
@@ -56,18 +54,51 @@ class _State extends State<EstablishmentPage> {
                 Container(
                   padding: EdgeInsets.only(bottom: 15.0),
                   child: TextField(
-                    controller: enderecoController,
-                    keyboardType: TextInputType.visiblePassword,
+                    keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15.0)
                       ),
-                      labelText: "Endereço",
+                      labelText: "Limite jogadores",
                       labelStyle: TextStyle(
                         color: Colors.black,
                       ),
                     ),
                   ),
+                ),
+                Row(
+                  children: [
+                    new Flexible(
+                      flex: 5,
+                      child: TextField(
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15.0)
+                          ),
+                          labelText: "Comprimento",
+                          labelStyle: TextStyle(
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                    new Flexible(
+                      flex: 5,
+                      child: TextField(
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15.0)
+                          ),
+                          labelText: "Largura",
+                          labelStyle: TextStyle(
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 RaisedButton(
                     color: Colors.black,
@@ -77,16 +108,12 @@ class _State extends State<EstablishmentPage> {
                         style: TextStyle(color: Colors.white),
                       ),
                     ),
-                    onPressed: () {
-                      establishment.nome = nomeController.text;
-                      establishment.endereco = enderecoController.text;
-                      firebaseService.createEstablishment(establishment);
-                    }),
+                    onPressed: () {}
+                ),
               ],
             ),
           ),
         ),
-      ),
-    );;
+      );
   }
 }

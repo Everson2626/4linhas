@@ -6,7 +6,7 @@ import 'package:projeto/object/Establishment.dart';
 import 'package:projeto/object/User.dart';
 import 'package:projeto/object/Match.dart';
 import 'package:projeto/service/firebaseService.dart';
-import 'package:projeto/ui/Cadastro_Page.dart';
+import 'file:///C:/Users/Pichau/AndroidStudioProjects/projeto/lib/ui/autenticacao/Cadastro_Page.dart';
 import 'package:projeto/ui/home_player.dart';
 
 class FirebaseService {
@@ -79,15 +79,9 @@ class FirebaseService {
     });
   }
 
-  void getMatch(){
-    firestoreInstance.collection("users").get().then((querySnapshot) {
-      querySnapshot.docs.forEach((result) {
-        print(result.data());
-      });
-    });
+  getMatch() {
+
   }
-
-
 
   void mensagem(String mensagem) {
     showDialog(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projeto/object/User.dart';
 import 'package:projeto/service/firebaseService.dart';
-import 'package:projeto/ui/Cadastro_Page.dart';
+import 'file:///C:/Users/Pichau/AndroidStudioProjects/projeto/lib/ui/autenticacao/Cadastro_Page.dart';
 import 'package:projeto/ui/home_player.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
