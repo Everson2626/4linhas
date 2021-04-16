@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:projeto/service/firebaseService.dart';
-import 'file:///C:/Users/Pichau/AndroidStudioProjects/projeto/lib/ui/partida/Create_Match.dart';
-import 'file:///C:/Users/Pichau/AndroidStudioProjects/projeto/lib/ui/estabelecimento/Create_Establishment.dart';
 
 class HomePlayer extends StatefulWidget {
   @override
@@ -75,7 +73,7 @@ class _HomePlayerState extends State<HomePlayer> {
             ListTile(
               title: Text('Estabelecimentos'),
               onTap: () {
-                Navigator.pushNamed(context, '/establishment');
+                Navigator.pushNamed(context, '/establishment_list');
               },
             ),
             ListTile(

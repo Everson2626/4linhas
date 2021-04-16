@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:projeto/object/Campo.dart';
+import 'package:projeto/service/firebaseService.dart';
 
 class CreateCampo extends StatefulWidget {
+  final String estabelecimentoId;
+
+  const CreateCampo({Key key, this.estabelecimentoId}) : super(key: key);
   @override
   _CreateCampoState createState() => _CreateCampoState();
 }
 
 class _CreateCampoState extends State<CreateCampo> {
+  FirebaseService firebaseService = new FirebaseService();
+
+  final nomeController = new TextEditingController();
+  final limiteJogadores = new TextEditingController();
+  final comprimentoController = new TextEditingController();
+  final larguraController = new TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -13,7 +24,7 @@ class _CreateCampoState extends State<CreateCampo> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
-          "Cria campo",
+          "Cria Campo",
           style: TextStyle(
             fontSize: 20.0,
           ),
@@ -39,6 +50,7 @@ class _CreateCampoState extends State<CreateCampo> {
                 Container(
                   padding: EdgeInsets.only(bottom: 15.0),
                   child: TextField(
+                    controller: nomeController,
                     keyboardType: TextInputType.visiblePassword,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
@@ -54,6 +66,7 @@ class _CreateCampoState extends State<CreateCampo> {
                 Container(
                   padding: EdgeInsets.only(bottom: 15.0),
                   child: TextField(
+                    controller: limiteJogadores,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
@@ -71,6 +84,7 @@ class _CreateCampoState extends State<CreateCampo> {
                     new Flexible(
                       flex: 5,
                       child: TextField(
+                        controller: comprimentoController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
@@ -86,6 +100,7 @@ class _CreateCampoState extends State<CreateCampo> {
                     new Flexible(
                       flex: 5,
                       child: TextField(
+                        controller: larguraController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
@@ -108,7 +123,17 @@ class _CreateCampoState extends State<CreateCampo> {
                         style: TextStyle(color: Colors.white),
                       ),
                     ),
-                    onPressed: () {}
+                    onPressed: () {
+                      firebaseService.createCampo(
+                          Campo(
+                            nomeController.text,
+                            limiteJogadores.text,
+                            comprimentoController.text,
+                            larguraController.text
+                          ),
+                          widget.estabelecimentoId
+                      );
+                    }
                 ),
               ],
             ),

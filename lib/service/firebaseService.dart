@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:projeto/object/Campo.dart';
 import 'package:projeto/object/Establishment.dart';
 import 'package:projeto/object/User.dart';
 import 'package:projeto/object/Match.dart';
@@ -57,6 +58,20 @@ class FirebaseService {
       }
       return false;
     }
+  }
+
+  void createCampo(Campo campo, String establishmentId) async{
+    await firestoreInstance.collection("Establishment")
+        .doc(establishmentId)
+        .collection('campo')
+        .add(
+          {
+            "nome": campo.nome,
+            "limite_jogadores": campo.limite_jogadores,
+            "largura": campo.largura,
+            "comprimento": campo.comprimento,
+          }
+        ).then((value) => {print(value)});
   }
 
   void createEstablishment(Establishment establishment) async{
