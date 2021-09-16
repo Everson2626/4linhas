@@ -1,9 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:projeto/object/User.dart';
 import 'package:projeto/service/firebaseService.dart';
-import 'file:///C:/Users/Pichau/AndroidStudioProjects/projeto/lib/ui/autenticacao/Cadastro_Page.dart';
 import 'package:projeto/ui/home_player.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dwds/dwds.dart';
+
+import 'package:projeto/ui/autenticacao/Cadastro_Page.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -18,7 +21,6 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-
     player = UserPlayer();
 
     final emailController = TextEditingController();
@@ -87,14 +89,21 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: () {
                     player.email = emailController.text;
                     player.password = passwordController.text;
-                    firebaseService.login(player).then((value) => {
-                      if(value){
-                        Navigator.pushNamed(context, '/home_page')
-                      }
-                    });
-                  }
-
-              ),
+                    SharedPreferences prefs;
+                    firebaseService.login(player).then((value) async => {
+                          if (value)
+                            {
+                              prefs = await SharedPreferences.getInstance(),
+                              prefs.setString("email", emailController.text),
+                              prefs.setString(
+                                  "password", passwordController.text),
+                              Navigator.pushNamed(context, '/home_page'),
+                              mensagem("Login realizado!")
+                            }
+                          else
+                            {mensagem("Falha ao realizar o login!")}
+                        });
+                  }),
               GestureDetector(
                 child: Text("Cadastrar"),
                 onTap: () {
@@ -106,5 +115,38 @@ class _LoginPageState extends State<LoginPage> {
         ),
       )),
     );
+  }
+
+  @override
+  void initState() {
+    verificarAutenticacao();
+  }
+
+  Widget mensagem(String mensagem) {
+    final snackBar = SnackBar(
+      content: Text(mensagem),
+      action: SnackBarAction(
+        label: 'Desfazer',
+        onPressed: () {
+          // Some code to undo the change.
+        },
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  Future<void> verificarAutenticacao() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (prefs.getString("uid") != null) {
+      player.email = prefs.getString("email");
+      player.password = prefs.getString("password");
+      firebaseService.login(player).then((value) => {
+            if (value)
+              {
+                Navigator.pushNamed(context, '/home_page'),
+              }
+          });
+    }
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projeto/object/User.dart';
 import 'package:projeto/service/firebaseService.dart';
-import 'file:///C:/Users/Pichau/AndroidStudioProjects/projeto/lib/ui/autenticacao/Login_Page.dart';
+import 'package:projeto/ui/autenticacao/Login_Page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 
@@ -125,8 +125,10 @@ class _CadastroPageState extends State<CadastroPage> {
                         player.email = emailController.text;
                         player.password = passwordController.text;
                         player.confirmPassword = confirmController.text;
-                        print(player.email);
-                        firebaseService.cadastro(player);
+                        print(player.getData());
+                        firebaseService.cadastro(player).then((value) => {
+                          mensagem(value.toString())
+                        });
                       }
                   ),
                   GestureDetector(
@@ -142,5 +144,17 @@ class _CadastroPageState extends State<CadastroPage> {
       ),
     );
   }
+  void mensagem(String mensagem) {
+    final snackBar = SnackBar(
+      content: Text(mensagem),
+      action: SnackBarAction(
+        label: 'Desfazer',
+        onPressed: () {
+          // Some code to undo the change.
+        },
+      ),
+    );
 
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
 }

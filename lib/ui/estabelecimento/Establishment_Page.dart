@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:projeto/object/Campo.dart';
+import 'package:projeto/object/CampoRetorno.dart';
 import 'package:projeto/service/firebaseService.dart';
 import 'package:projeto/ui/campo/Create_Campo.dart';
 
@@ -62,7 +63,17 @@ class _EstablishmentState extends State<EstablishmentPage> {
                           itemCount: snapshot.data.docs.length,
                           itemBuilder: (context, index) {
                             DocumentSnapshot document = snapshot.data.docs[index];
-                            return campoCard(document["nome"],document["limite_jogadores"],document["largura"],document["comprimento"]);
+                            return GestureDetector(
+                              onTap: (){
+                                CampoRetorno.establishmentUid = widget.estabelecimentoId;
+                                CampoRetorno.campoUid = snapshot.data.docs[index].id;
+                                CampoRetorno.nome = document["nome"];
+                                setState(() {});
+                                int count = 0;
+                                Navigator.of(context).popUntil((_) => count++ >= 2);
+                              },
+                              child: campoCard(document["nome"],document["limite_jogadores"],document["largura"],document["comprimento"]),
+                            );
                           },
                         );
                       }else{
@@ -76,18 +87,10 @@ class _EstablishmentState extends State<EstablishmentPage> {
         ],
       ),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => CreateCampo(estabelecimentoId: widget.estabelecimentoId,)));
-        },
-        child: const Icon(Icons.add),
-        backgroundColor: Colors.green,
-      ),
-    );;
+    );
   }
 }
 Widget campoCard(String nome,int lim_jogador, int largura, int comprimento) {
-  print("Nome: $nome\nLim_jogador: $lim_jogador\nLargura: $largura\nComprimento: $comprimento");
   return Card(
     child: Container(
       color: Colors.grey,

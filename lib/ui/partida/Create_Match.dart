@@ -2,9 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:projeto/object/CampoRetorno.dart';
 import 'package:projeto/object/User.dart';
 import 'package:projeto/object/Match.dart';
 import 'package:projeto/service/firebaseService.dart';
+import 'package:projeto/ui/estabelecimento/Establishment_List_Page.dart';
 
 class CreateMatchPage extends StatefulWidget {
   @override
@@ -16,13 +19,28 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
   FirebaseService firebaseService;
 
   Match match;
-
+  String campoId;
+  String estabelecimentoId;
   final nomeController = TextEditingController();
   final precoController = TextEditingController();
   final dataController = TextEditingController();
+  final f = new DateFormat('dd-MM-yyyy hh:mm');
+
+
+  String dataPartida = "Data";
+
+
+  @override
+  void initState() {
+    CampoRetorno.establishmentUid = null;
+    CampoRetorno.campoUid = null;
+    CampoRetorno.nome = "Selecione o local";
+  }
+
   @override
   Widget build(BuildContext context) {
-    match = Match();
+
+    firebaseService = new FirebaseService();
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -41,7 +59,7 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
           child: Container(
             padding: EdgeInsets.all(10.0 ),
             color: Colors.white,
-            height: 400.0,
+            height: 450.0,
             child: Column(
               children: [
                 Container(
@@ -87,22 +105,40 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                     ),
                   ),
                 ),
-                Text(
-                  "${selectedDate.toLocal()}".split(' ')[0],
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                Container(
-                  padding: EdgeInsets.only(bottom: 15.0),
-                    child: RaisedButton(
-                      onPressed: () => _selectDate(context), // Refer step 3
-                      child: Text(
-                        'Select date',
-                        style:
-                        TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.only(right: 5.0),
+                      child: RaisedButton(
+                        onPressed: () => _selectDate(context), // Refer step 3
+                        child: Text(
+                          this.dataPartida,
+                          style:
+                          TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                        ),
+                        color: Colors.greenAccent,
                       ),
-                      color: Colors.greenAccent,
-                    ),
 
+                    ),
+                    Container(
+                      child: RaisedButton(
+                          color: Colors.greenAccent,
+                          child: Text(
+                            CampoRetorno.nome,
+                            style: TextStyle(
+                                color: Colors.black
+                            ),
+                          ),
+                          onPressed: () async {
+                            await Navigator.pushNamed(context, '/establishment_list');
+                            this.estabelecimentoId = CampoRetorno.establishmentUid;
+                            this.campoId = CampoRetorno.campoUid;
+                            setState(() {});
+                          }
+                      ),
+                    ),
+                  ],
                 ),
                 RaisedButton(
                     color: Colors.black,
@@ -113,10 +149,16 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                       ),
                     ),
                     onPressed: () {
+                      match = Match();
                       match.nome = nomeController.text;
                       match.preco = precoController.text;
                       match.data = "${selectedDate.toLocal()}".split(' ')[0];
-                      firebaseService.createMatch(match);
+                      match.userAdm = FirebaseAuth.instance.currentUser.uid;
+                      if(firebaseService.createMatch(match)){
+                        mensagem("Partida criada");
+                      }else{
+                        mensagem("Selecione um campo para a partida");
+                      }
                     }),
               ],
             ),
@@ -136,7 +178,23 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
     if (picked != null && picked != selectedDate)
       setState(() {
         selectedDate = picked;
+        this.dataPartida = "${f.format(selectedDate.toLocal())}".split(' ')[0];
+        print("Data: "+dataPartida);
       });
+
+  }
+  Widget mensagem(String mensagem) {
+    final snackBar = SnackBar(
+      content: Text(mensagem),
+      action: SnackBarAction(
+        label: 'Desfazer',
+        onPressed: () {
+          // Some code to undo the change.
+        },
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   }

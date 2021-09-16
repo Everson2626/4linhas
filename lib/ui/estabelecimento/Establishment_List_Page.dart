@@ -6,6 +6,7 @@ import 'package:projeto/ui/estabelecimento/Establishment_Page.dart';
 class EstablishmentListPage extends StatefulWidget {
   @override
   _EstablishmentListPageState createState() => _EstablishmentListPageState();
+
 }
 
 class _EstablishmentListPageState extends State<EstablishmentListPage> {
@@ -54,13 +55,6 @@ class _EstablishmentListPageState extends State<EstablishmentListPage> {
         },
       ),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/create_establishment');
-        },
-        child: const Icon(Icons.add),
-        backgroundColor: Colors.green,
-      ),
     );
   }
 }
