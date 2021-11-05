@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:projeto/object/Campo.dart';
 import 'package:projeto/service/firebaseService.dart';
@@ -11,7 +12,7 @@ class CreateCampo extends StatefulWidget {
 }
 
 class _CreateCampoState extends State<CreateCampo> {
-  FirebaseService firebaseService = new FirebaseService();
+  FirebaseService firebaseService = new FirebaseService(FirebaseAuth.instance);
 
   final nomeController = new TextEditingController();
   final limiteJogadores = new TextEditingController();

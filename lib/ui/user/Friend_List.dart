@@ -1,23 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:projeto/object/User.dart';
 import 'package:projeto/service/firebaseService.dart';
 import 'package:projeto/ui/estabelecimento/Establishment_Page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
+class FiendList extends StatefulWidget {
+  const FiendList({Key key}) : super(key: key);
 
-class FriendRequestPage extends StatefulWidget {
   @override
-  _FriendRequestPageState createState() => _FriendRequestPageState();
+  _FiendListState createState() => _FiendListState();
 }
 
-class _FriendRequestPageState extends State<FriendRequestPage> {
+class _FiendListState extends State<FiendList> {
   String userAuthId;
   final firestoreInstance = FirebaseFirestore.instance;
   FirebaseService firebaseService = FirebaseService(FirebaseAuth.instance);
   final db = FirebaseFirestore.instance;
   CollectionReference establishment =
-      FirebaseFirestore.instance.collection('match');
+  FirebaseFirestore.instance.collection('match');
 
   @override
   Widget build(BuildContext context) {
@@ -28,15 +30,15 @@ class _FriendRequestPageState extends State<FriendRequestPage> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: Text(
-          "Pedidos de amizade",
+          "Amigos",
           style: TextStyle(color: Colors.white),
         ),
       ),
       body: StreamBuilder(
         stream: FirebaseFirestore.instance
-            .collection("Request")
+            .collection("User")
             .doc(userAuthId)
-            .collection("Friend")
+            .collection("Friends")
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           switch (snapshot.connectionState) {
@@ -48,21 +50,21 @@ class _FriendRequestPageState extends State<FriendRequestPage> {
                 scrollDirection: Axis.vertical,
                 shrinkWrap: true,
                 children:
-                    snapshot.data.docs.map<Widget>((DocumentSnapshot doc) {
+                snapshot.data.docs.map<Widget>((DocumentSnapshot doc) {
+                  print("Uid: "+doc.data()['uid']);
+                  return Container(
+                    child: FutureBuilder(
+                        future: getFutureDados(doc.data()['uid']),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData){
+                            return playerCard(snapshot.data.name, snapshot.data.uid, snapshot.data.urlImageProfile);
+                          }else{
+                            return playerCard(doc.data()['nome'], doc.data()['uid'], null);
+                          }
 
-                      return Container(
-                        child: FutureBuilder(
-                            future: getFutureDados(doc.data()['uid']),
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData){
-                                return playerCard(doc.data()['nome'], doc.data()['uid'], snapshot.data);
-                              }else{
-                                return playerCard(doc.data()['nome'], doc.data()['uid'], null);
-                              }
-
-                            }
-                        ),
-                      );
+                        }
+                    ),
+                  );
 
                   //return playerCard(doc.data()['nome'], doc.data()['uid']);
                 }).toList(),
@@ -119,63 +121,35 @@ Widget playerCard(String nome, String uid, String image) {
             ),
           ),
           Expanded(
-            flex: 2,
+              flex: 2,
               child: Row(
                 children: [
                   GestureDetector(
                     child: Container(
-                      width: 40.0,
-                      height: 40.0,
+                      width: 80.0,
+                      height: 80.0,
                       child: Icon(
                         Icons.person_remove_sharp,
-                        size: 25.0,
+                        size: 50.0,
                         color: Colors.red,
                       ),
                     ),
                     onTap: (){
                       FirebaseFirestore.instance
-                          .collection("Request")
+                          .collection("User")
                           .doc(userAuthId)
-                          .collection("Friend")
+                          .collection("Friends")
                           .doc(uid)
                           .delete();
-
-                      mensagem("Solicitação recusada");
-                    },
-                  ),
-                  GestureDetector(
-                    child: Container(
-                      width: 40.0,
-                      height: 40.0,
-                      child: Icon(
-                        Icons.person_add,
-                        size: 25.0,
-                        color: Colors.white,
-                      ),
-                    ),
-                    onTap: (){
-                      FirebaseFirestore.instance
-                        .collection("User")
-                        .doc(userAuthId)
-                        .collection("Friends")
-                        .doc(uid)
-                        .set({"uid": uid});
 
                       FirebaseFirestore.instance
                           .collection("User")
                           .doc(uid)
                           .collection("Friends")
                           .doc(userAuthId)
-                          .set({"uid": userAuthId});
-
-                      FirebaseFirestore.instance
-                          .collection("Request")
-                          .doc(userAuthId)
-                          .collection("Friend")
-                          .doc(uid)
                           .delete();
 
-                      mensagem("Solicitação aceita");
+                      mensagem("Solicitação recusada");
                     },
                   ),
                 ],
@@ -215,8 +189,19 @@ Widget campoImage(String urlImage) {
   }
 }
 
-Future<String> getFutureDados(String userUid) async {
-  return await firebase_storage.FirebaseStorage.instance
-                  .ref('/image_profile/' + userUid)
-                  .getDownloadURL();
+Future<UserPlayer> getFutureDados(String userUid) async {
+  UserPlayer userAtual = new UserPlayer();
+  userAtual.uid = userUid;
+  await FirebaseFirestore.instance
+          .collection('User')
+          .doc(userUid)
+          .get().then((value) => {
+            userAtual.name = value.data()['nome']
+          });
+  userAtual.urlImageProfile = await firebase_storage.FirebaseStorage.instance
+                                .ref('/image_profile/' + userUid)
+                                .getDownloadURL();
+
+  return userAtual;
 }
+

@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:projeto/object/Campo.dart';
 import 'package:projeto/object/CampoRetorno.dart';
 import 'package:projeto/service/firebaseService.dart';
 import 'package:projeto/ui/campo/Create_Campo.dart';
+import 'package:projeto/ui/partida/Timer_Page.dart';
 
 import 'Establishment_List_Page.dart';
 
@@ -20,7 +22,7 @@ class EstablishmentPage extends StatefulWidget {
 
 class _EstablishmentState extends State<EstablishmentPage> {
   final firestoreInstance = FirebaseFirestore.instance;
-  FirebaseService firebaseService = FirebaseService();
+  FirebaseService firebaseService = FirebaseService(FirebaseAuth.instance);
   final db = FirebaseFirestore.instance;
 
   CollectionReference collection;
@@ -63,14 +65,10 @@ class _EstablishmentState extends State<EstablishmentPage> {
                           itemCount: snapshot.data.docs.length,
                           itemBuilder: (context, index) {
                             DocumentSnapshot document = snapshot.data.docs[index];
+                            String campoUid = snapshot.data.docs[index].id;
                             return GestureDetector(
                               onTap: (){
-                                CampoRetorno.establishmentUid = widget.estabelecimentoId;
-                                CampoRetorno.campoUid = snapshot.data.docs[index].id;
-                                CampoRetorno.nome = document["nome"];
-                                setState(() {});
-                                int count = 0;
-                                Navigator.of(context).popUntil((_) => count++ >= 2);
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => TimePage(campoId: campoUid, establishmentUid: widget.estabelecimentoId,)));
                               },
                               child: campoCard(document["nome"],document["limite_jogadores"],document["largura"],document["comprimento"]),
                             );

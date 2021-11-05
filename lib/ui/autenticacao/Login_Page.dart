@@ -1,7 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:projeto/object/Location.dart';
 import 'package:projeto/object/User.dart';
 import 'package:projeto/service/firebaseService.dart';
+import 'package:projeto/ui/autenticacao/Redefinir_Page.dart';
 import 'package:projeto/ui/home_player.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dwds/dwds.dart';
@@ -15,9 +19,12 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   FirebaseAuth auth = FirebaseAuth.instance;
-  FirebaseService firebaseService = FirebaseService();
+  FirebaseService firebaseService = FirebaseService(FirebaseAuth.instance);
 
   UserPlayer player;
+
+  Position position;
+  String currentLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +32,8 @@ class _LoginPageState extends State<LoginPage> {
 
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
+
+
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -34,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
         child: Container(
           padding: EdgeInsets.all(10.0),
           color: Colors.white,
-          height: 400.0,
+          //height: 400.0,
           child: Column(
             children: [
               Container(
@@ -56,7 +65,7 @@ class _LoginPageState extends State<LoginPage> {
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15.0)),
-                    labelText: "Login",
+                    labelText: "Email",
                     labelStyle: TextStyle(
                       color: Colors.black,
                     ),
@@ -65,18 +74,41 @@ class _LoginPageState extends State<LoginPage> {
               ),
               Container(
                 padding: EdgeInsets.only(bottom: 30.0),
-                child: TextField(
-                  keyboardType: TextInputType.visiblePassword,
-                  controller: passwordController,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15.0)),
-                    labelText: "Senha",
-                    labelStyle: TextStyle(
-                      color: Colors.black,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      obscureText: true,
+                      enableSuggestions: false,
+                      autocorrect: false,
+                      keyboardType: TextInputType.visiblePassword,
+                      controller: passwordController,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15.0)),
+                        labelText: "Senha",
+                        labelStyle: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
                     ),
-                  ),
+                    Container(
+                      margin: EdgeInsets.only(top: 5.0, left: 5.0),
+                      child: GestureDetector(
+                        onTap: (){
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => RedefinirPage()));
+                        },
+                        child: Text(
+                          "Redefinir senha",
+                        ),
+                      ),
+                    )
+                  ],
                 ),
+
               ),
               RaisedButton(
                   color: Colors.black,
@@ -87,6 +119,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   onPressed: () {
+                    String userUid;
                     player.email = emailController.text;
                     player.password = passwordController.text;
                     SharedPreferences prefs;
@@ -97,8 +130,14 @@ class _LoginPageState extends State<LoginPage> {
                               prefs.setString("email", emailController.text),
                               prefs.setString(
                                   "password", passwordController.text),
-                              Navigator.pushNamed(context, '/home_page'),
-                              mensagem("Login realizado!")
+
+                              userUid = FirebaseAuth.instance.currentUser.uid,
+                              firebaseService.verificaSePossuiCollection(userUid).whenComplete(() => {
+                                Navigator.pushNamed(context, '/home_page'),
+
+                                mensagem("Login realizado!")
+                              }),
+
                             }
                           else
                             {mensagem("Falha ao realizar o login!")}
@@ -120,6 +159,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     verificarAutenticacao();
+    this._getCurrentLocation();
   }
 
   Widget mensagem(String mensagem) {
@@ -147,6 +187,32 @@ class _LoginPageState extends State<LoginPage> {
                 Navigator.pushNamed(context, '/home_page'),
               }
           });
+    }
+  }
+
+  void _getCurrentLocation() async {
+    LocationPermission permission;
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        setState(() {
+          SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+        });
+      }else{
+        var position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+        setState(() {
+          LocationUser.longitude = position.longitude;
+          LocationUser.latitude = position.latitude;
+        });
+      }
+    }else{
+      var position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        LocationUser.longitude = position.longitude;
+        LocationUser.latitude = position.latitude;
+      });
     }
   }
 }

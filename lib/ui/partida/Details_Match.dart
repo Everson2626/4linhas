@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:projeto/object/Match.dart';
 import 'package:projeto/object/User.dart';
 import 'package:projeto/ui/partida/Edit_Match.dart';
+import 'package:projeto/service/firebaseService.dart';
+
 
 import 'Finished_Match.dart';
 
@@ -24,12 +26,13 @@ class _DetailsMatchState extends State<DetailsMatch> {
   List<String> players = [];
   bool listPlayerLoad = false;
   bool possuiJogadores = true;
-
+  FirebaseService firebaseService = FirebaseService(FirebaseAuth.instance);
 
   @override
   void initState() {
     listPlayerLoad = false;
     userAuth.uid = FirebaseAuth.instance.currentUser.uid;
+    match.uid = widget.matchId;
     this.getUser().whenComplete(() => {
       if(this.players.length > 0){
         this.listPlayerLoad = true,
@@ -53,15 +56,7 @@ class _DetailsMatchState extends State<DetailsMatch> {
           style: TextStyle(color: Colors.white),
         ),
         actions: [
-          Container(
-            margin: EdgeInsets.only(right: 10.0),
-            child: IconButton(icon: Icon(Icons.edit),
-              onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => EditMatchPage(matchId: widget.matchId)));
-              },
-            ),
-          )
+          editMatchButton()
 
         ],
       ),
@@ -183,7 +178,26 @@ class _DetailsMatchState extends State<DetailsMatch> {
   }
 
   Widget buttonRemove(String userAtualUid){
-    if(userAtualUid != this.userAuth.uid){
+    if(userAtualUid != this.match.userAdm){
+      return isAdm(userAtualUid);
+    }else{
+      return Expanded(
+        flex: 2,
+          child: Container(
+            width: 30,
+            height: 60,
+            child: Icon(
+              Icons.people_alt_sharp,
+              size: 30.0,
+              color: Colors.black,
+            ),
+          ),
+      );
+    }
+  }
+
+  Widget isAdm(String userAtualUid){
+    if(this.userAuth.uid == this.match.userAdm){
       return Expanded(
           flex: 2,
           child: GestureDetector(
@@ -207,18 +221,7 @@ class _DetailsMatchState extends State<DetailsMatch> {
           )
       );
     }else{
-      return Expanded(
-        flex: 2,
-          child: Container(
-            width: 30,
-            height: 60,
-            child: Icon(
-              Icons.people_alt_sharp,
-              size: 30.0,
-              color: Colors.black,
-            ),
-          ),
-      );
+      return Container();
     }
   }
 
@@ -246,25 +249,28 @@ class _DetailsMatchState extends State<DetailsMatch> {
           color: Colors.black,
           child: Text("Iniciar partida", style: TextStyle(color: Colors.white),),
           onPressed: (){
-            FirebaseFirestore.instance
-                .collection('match')
-                .doc(widget.matchId)
-                .set({
-              'status': "iniciada",
-              'nome': match.nome,
-              'data': match.data,
-              'preco': match.preco,
-              'campoUid': match.campoId,
-              'estabelecimentoUid': match.estabelecimentoId,
-              'criador': match.userAdm,
-              'urlImage': match.urlImage
-            }).then((result){
-              match.status = "iniciada";
-              mensagem("Partida iniciada");
-              setState(() {});
-            }).catchError((onError){
-              mensagem("Ocorreu algum erro");
-            });
+            match.status = "iniciada";
+            firebaseService.updateMatch(match);
+            setState(() {});
+            //FirebaseFirestore.instance
+            //    .collection('match')
+            //    .doc(widget.matchId)
+            //    .set({
+            //  'status': "iniciada",
+            //  'nome': match.nome,
+            //  'data': match.data,
+            //  'preco': match.preco,
+            //  'campoUid': match.campoId,
+            //  'estabelecimentoUid': match.estabelecimentoId,
+            //  'criador': match.userAdm,
+            //  'urlImage': match.urlImage
+            //}).then((result){
+            //  match.status = "iniciada";
+            //  mensagem("Partida iniciada");
+            //  setState(() {});
+            //}).catchError((onError){
+            //  mensagem("Ocorreu algum erro");
+            //});
           }
         );
       }else if(match.status == 'iniciada'){
@@ -391,5 +397,23 @@ class _DetailsMatchState extends State<DetailsMatch> {
     }).whenComplete(() => {
       setState(() {})
     });
+  }
+
+  Widget editMatchButton(){
+    print(this.userAuth.uid);
+    print(this.match.userAdm);
+    if(this.userAuth.uid == this.match.userAdm){
+      return Container(
+        margin: EdgeInsets.only(right: 10.0),
+        child: IconButton(icon: Icon(Icons.edit),
+          onPressed: () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => EditMatchPage(matchId: widget.matchId)));
+          },
+        ),
+      );
+    }else{
+      return Container();
+    }
   }
 }

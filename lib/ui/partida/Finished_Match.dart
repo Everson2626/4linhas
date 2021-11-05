@@ -23,6 +23,9 @@ class _FinishedMatchState extends State<FinishedMatch> {
   UserFinishedMatch userTeste = new UserFinishedMatch();
   bool dadosCarregados = false;
 
+  List<double> arrayGols = new List();
+  List<double> arrayAssistencia = new List();
+
 
   @override
   void initState() {
@@ -75,7 +78,7 @@ class _FinishedMatchState extends State<FinishedMatch> {
           itemCount: listUsers.length,
           itemBuilder: (context, index) {
             return ListTile(
-              title: cardJogador(listUsers[index]),
+              title: cardJogador(listUsers[index], index),
             );
           },
         ),
@@ -85,12 +88,12 @@ class _FinishedMatchState extends State<FinishedMatch> {
     }
   }
 
-  Future<void> loadDados(){
+  Future<void> loadDados() async {
     this.listUsers.forEach((element) {
       salvarDadosDoJogadorNaPartida(element);
     });
 
-    FirebaseFirestore.instance
+    await FirebaseFirestore.instance
         .collection('match')
         .doc(widget.matchId)
         .set({
@@ -109,6 +112,10 @@ class _FinishedMatchState extends State<FinishedMatch> {
     }).catchError((onError){
       mensagem("Ocorreu algum erro");
     });
+    this.arrayAssistencia = new List();
+    this.arrayGols = new List();
+    int count = 0;
+    Navigator.of(context).popUntil((_) => count++ >= 2);
   }
 
   void salvarDadosDoJogadorNaPartida(UserPlayer user){
@@ -124,24 +131,18 @@ class _FinishedMatchState extends State<FinishedMatch> {
         user.assistencias = value['assistencia'] + user.assistencias,
       }
     }).whenComplete(() => {
-      FirebaseFirestore.instance
-          .collection('User')
-          .doc(user.uid)
-          .update(
-          {
-            'nome': user.name,
-            'gols': user.gols.round(),
-            'assistencia': user.assistencias.round()
-          }
-      ),
+      user.atualizarUsuario().whenComplete(() => {
+        user.gols = 0,
+        user.assistencias = 0,
+      }),
     });
   }
 
-  Widget cardJogador(UserPlayer user) {
+  Widget cardJogador(UserPlayer user, index) {
     return Container(
       padding: EdgeInsets.all(5.0),
       decoration: BoxDecoration(
-        color: Colors.grey,
+        color: Colors.lightGreen,
         border: Border.all(color: Colors.blueGrey, width: 1.0),
         borderRadius: BorderRadius.circular(5.0),
       ),
@@ -152,16 +153,13 @@ class _FinishedMatchState extends State<FinishedMatch> {
             children: [
               Expanded(
                   flex: 3,
-                  child: Container(
-                    height: 100.0,
-                    child: Image.network(
-                        "https://firebasestorage.googleapis.com/v0/b/linhas-62812.appspot.com/o/estabelecimento%2FRjtmH5D6HoausaojXXBQT2b2nPk2%2FGRAwCdLcgQ24A8c2FSel?alt=media&token=8c52036f-6c87-440b-a9aa-8b459a32568e"),
-                  )),
+                  child: imagemProfile(user)
+              ),
               Expanded(
                   flex: 7,
                   child: Column(
                     children: [
-                      Text("Posições: ZG LT", style: TextStyle(fontSize: 20.0),),
+                      Text(user.positions, style: TextStyle(fontSize: 20.0),),
                       Row(
                         children: [
                           Expanded(
@@ -171,14 +169,15 @@ class _FinishedMatchState extends State<FinishedMatch> {
                           Expanded(
                             flex: 9,
                             child: Slider(
-                              value: user.gols,
+                              value: this.arrayGols[index],
                               min: 0,
                               max: 10,
                               divisions: 11,
-                              label: user.gols.round().toString(),
+                              label: this.arrayGols[index].round().toString(),
                               onChanged: (double value) {
                                 setState(() {
-                                  user.gols = value;
+                                  user.gols = value.round();
+                                  this.arrayGols[index] = value;
                                 });
                               },
                             ),
@@ -194,14 +193,15 @@ class _FinishedMatchState extends State<FinishedMatch> {
                           Expanded(
                             flex: 9,
                             child: Slider(
-                              value: user.assistencias,
+                              value: this.arrayAssistencia[index],
                               min: 0,
                               max: 10,
                               divisions: 11,
-                              label: user.assistencias.round().toString(),
+                              label: this.arrayAssistencia[index].round().toString(),
                               onChanged: (double value) {
                                 setState(() {
-                                  user.assistencias = value;
+                                  this.arrayAssistencia[index] = value;
+                                  user.assistencias = value.round();
                                 });
                               },
                             ),
@@ -220,6 +220,8 @@ class _FinishedMatchState extends State<FinishedMatch> {
 
   Future<void> getJogadores() async {
     UserPlayer userAtual = new UserPlayer();
+    UserPlayer newUser;
+    print(arrayGols.length);
     await FirebaseFirestore.instance
         .collection('match')
         .doc(widget.matchId)
@@ -230,16 +232,13 @@ class _FinishedMatchState extends State<FinishedMatch> {
 
           userAtual.uid = element.data()['userUid'],
 
-          await FirebaseFirestore.instance
-            .collection("User")
-            .doc(userAtual.uid)
-            .get()
-            .then((value) => {
-              userAtual.name = value.data()['nome'],
-            }).whenComplete(() => {
-              this.listUsers.add(userAtual.retornaNovoJogador(element.data()['userUid'], userAtual.name))
-              , print("User atual: "+element.data()['userUid']),
-            })
+          await userAtual.getUsetAuthData().whenComplete(() => {
+            print("Posições: "+userAtual.positions),
+            this.arrayGols.add(0.0),
+            this.arrayAssistencia.add(0.0),
+            this.listUsers.add(userAtual.retornaNovoJogador(element.data()['userUid'], userAtual.name)),
+
+          })
         })).whenComplete(() => {dadosCarregados = true, setState(() {})});
   }
 
@@ -274,5 +273,26 @@ class _FinishedMatchState extends State<FinishedMatch> {
     );
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+  Widget imagemProfile(UserPlayer user) {
+    if (user.urlImageProfile != null) {
+      return ClipOval(
+          child: Image.network(
+            user.urlImageProfile,
+            height: 100.0,
+            //width: 90.0,
+            fit: BoxFit.fill,
+          ));
+    } else {
+      return CircleAvatar(
+        radius: 50,
+        backgroundColor: Colors.grey,
+        child: Icon(
+          Icons.person,
+          color: Colors.black,
+          size: 70.0,
+        ),
+      );
+    }
   }
 }

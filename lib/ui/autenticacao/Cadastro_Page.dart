@@ -12,7 +12,7 @@ class CadastroPage extends StatefulWidget {
 }
 
 class _CadastroPageState extends State<CadastroPage> {
-  FirebaseService firebaseService = FirebaseService();
+  FirebaseService firebaseService = FirebaseService(FirebaseAuth.instance);
 
   UserPlayer player;
   final nameController = TextEditingController();
@@ -83,6 +83,9 @@ class _CadastroPageState extends State<CadastroPage> {
                   Container(
                     padding: EdgeInsets.only(bottom: 15.0),
                     child: TextField(
+                      obscureText: true,
+                      enableSuggestions: false,
+                      autocorrect: false,
                       keyboardType: TextInputType.visiblePassword,
                       controller: passwordController,
                       decoration: InputDecoration(
@@ -99,6 +102,9 @@ class _CadastroPageState extends State<CadastroPage> {
                   Container(
                     padding: EdgeInsets.only(bottom: 15.0),
                     child: TextField(
+                      obscureText: true,
+                      enableSuggestions: false,
+                      autocorrect: false,
                       keyboardType: TextInputType.visiblePassword,
                       controller: confirmController,
                       decoration: InputDecoration(

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:projeto/service/firebaseService.dart';
 import 'package:projeto/ui/estabelecimento/Establishment_Page.dart';
@@ -12,7 +13,7 @@ class EstablishmentListPage extends StatefulWidget {
 class _EstablishmentListPageState extends State<EstablishmentListPage> {
 
   final firestoreInstance = FirebaseFirestore.instance;
-  FirebaseService firebaseService = FirebaseService();
+  FirebaseService firebaseService = FirebaseService(FirebaseAuth.instance);
   final db = FirebaseFirestore.instance;
   CollectionReference establishment = FirebaseFirestore.instance.collection('match');
 

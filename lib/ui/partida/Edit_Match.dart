@@ -40,7 +40,7 @@ class _CreateMatchPageState extends State<EditMatchPage> {
 
   @override
   Widget build(BuildContext context) {
-    firebaseService = new FirebaseService();
+    firebaseService = new FirebaseService(FirebaseAuth.instance);
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -140,11 +140,7 @@ class _CreateMatchPageState extends State<EditMatchPage> {
                               match.userAdm = FirebaseAuth.instance.currentUser.uid;
                               firebaseService.updateMatch(match);
 
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          DetailsMatch(matchId: widget.matchId)));
+                              Navigator.pop(context);
                             }),
                     ),
                     Expanded(
@@ -157,7 +153,7 @@ class _CreateMatchPageState extends State<EditMatchPage> {
                               ),
                             ),
                             onPressed: () {
-                              firebaseService.deleteMatch(match.uid);
+                              firebaseService.deleteMatch(widget.matchId);
                               Navigator.pushNamed(context, '/home_page');
                             }
                         ),

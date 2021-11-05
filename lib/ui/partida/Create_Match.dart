@@ -28,19 +28,20 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
 
 
   String dataPartida = "Data";
+  String buttonLocal;
 
 
   @override
   void initState() {
     CampoRetorno.establishmentUid = null;
     CampoRetorno.campoUid = null;
-    CampoRetorno.nome = "Selecione o local";
+    this.buttonLocal = "Selecione o local";
   }
 
   @override
   Widget build(BuildContext context) {
 
-    firebaseService = new FirebaseService();
+    firebaseService = new FirebaseService(FirebaseAuth.instance);
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -109,23 +110,10 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: EdgeInsets.only(right: 5.0),
-                      child: RaisedButton(
-                        onPressed: () => _selectDate(context), // Refer step 3
-                        child: Text(
-                          this.dataPartida,
-                          style:
-                          TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                        ),
-                        color: Colors.greenAccent,
-                      ),
-
-                    ),
-                    Container(
                       child: RaisedButton(
                           color: Colors.greenAccent,
                           child: Text(
-                            CampoRetorno.nome,
+                            this.buttonLocal,
                             style: TextStyle(
                                 color: Colors.black
                             ),
@@ -134,6 +122,7 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                             await Navigator.pushNamed(context, '/establishment_list');
                             this.estabelecimentoId = CampoRetorno.establishmentUid;
                             this.campoId = CampoRetorno.campoUid;
+                            this.buttonLocal = CampoRetorno.nome+" - "+CampoRetorno.dia.replaceAll("-", "/")+" "+CampoRetorno.hora;
                             setState(() {});
                           }
                       ),
@@ -152,13 +141,18 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
                       match = Match();
                       match.nome = nomeController.text;
                       match.preco = precoController.text;
-                      match.data = "${selectedDate.toLocal()}".split(' ')[0];
+                      match.data = CampoRetorno.dia;
+                      match.hora = CampoRetorno.hora;
                       match.userAdm = FirebaseAuth.instance.currentUser.uid;
-                      if(firebaseService.createMatch(match)){
-                        mensagem("Partida criada");
-                      }else{
-                        mensagem("Selecione um campo para a partida");
-                      }
+                      match.status = "pendente";
+                      match.timeUid = CampoRetorno.timeUid;
+                      print(match.data);
+                      firebaseService.createMatch(match).then((value) => {
+                        mensagem(value),
+                        if(value == "Partida criada\n\nAguarde ser confirmada pelo estabelecimento"){
+                          Navigator.pop(context),
+                        }
+                      });
                     }),
               ],
             ),

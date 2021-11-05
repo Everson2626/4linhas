@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:projeto/object/Establishment.dart';
 import 'package:projeto/service/firebaseService.dart';
@@ -11,7 +12,7 @@ class _State extends State<CreateEstablishment> {
 
   final nomeController = TextEditingController();
   final enderecoController = TextEditingController();
-  FirebaseService firebaseService = FirebaseService();
+  FirebaseService firebaseService = FirebaseService(FirebaseAuth.instance);
   Establishment establishment = Establishment();
   @override
   Widget build(BuildContext context) {

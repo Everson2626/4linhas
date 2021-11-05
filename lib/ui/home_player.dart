@@ -3,7 +3,12 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:projeto/object/CampoRetorno.dart';
+import 'package:projeto/object/Establishment.dart';
+import 'package:projeto/object/MatchFilter.dart';
 import 'package:projeto/object/User.dart';
 import 'package:projeto/service/firebaseService.dart';
 import 'package:projeto/ui/partida/Details_Match.dart';
@@ -13,6 +18,12 @@ import 'package:projeto/ui/user/Other_User_Page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:dwds/dwds.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:projeto/object/Location.dart';
+import 'package:hexcolor/hexcolor.dart';
+
+
+
 
 
 class HomePlayer extends StatefulWidget {
@@ -25,7 +36,7 @@ int _index = 1;
 class _HomePlayerState extends State<HomePlayer> {
   List<Match> match;
   PickedFile imageFile;
-  FirebaseService firebaseService = FirebaseService();
+  FirebaseService firebaseService = FirebaseService(FirebaseAuth.instance);
   firebase_storage.FirebaseStorage storage =
       firebase_storage.FirebaseStorage.instance;
   final firestoreInstance = FirebaseFirestore.instance;
@@ -33,12 +44,17 @@ class _HomePlayerState extends State<HomePlayer> {
   UserPlayer userAuth = new UserPlayer();
   List<String> partidas = [];
   String statusFiltro = 'pendente';
+  bool selectPendente = true;
+  bool selectConfirmado = false;
+  bool selectIniciado = false;
+  bool selectFinalizado = false;
+
 
   @override
-  void initState() {
+  Future<void> initState() {
     userAuth.uid = FirebaseAuth.instance.currentUser.uid;
-    //this.userAuth.clearDataCache();
-    this.userAuth.getUsetAuthData();
+    _getCurrentLocation();
+    this.userAuth.getUsetAuthData().whenComplete(() => setState(() => {}));
     this.partidas = [];
     this.getMatchs();
   }
@@ -90,6 +106,12 @@ class _HomePlayerState extends State<HomePlayer> {
               ),
             ),
             ListTile(
+              title: Text('Lista de amigos'),
+              onTap: () {
+                Navigator.pushNamed(context, '/friend_list');
+              },
+            ),
+            ListTile(
               title: Text('Pedidos de amizade'),
               onTap: () {
                 Navigator.pushNamed(context, '/friend_request');
@@ -97,18 +119,18 @@ class _HomePlayerState extends State<HomePlayer> {
             ),
             ListTile(
               title: Text('Sair'),
-              onTap: () async {
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                prefs.clear();
-                Navigator.pushNamed(context, '/');
+              onTap: () {
+                firebaseService.sair();
               },
             ),
+            
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/create_match');
+        onPressed: () async {
+          await Navigator.pushNamed(context, '/create_match');
+          CampoRetorno.resetValue();
         },
         child: const Icon(Icons.add),
         backgroundColor: Colors.green,
@@ -201,6 +223,7 @@ class _HomePlayerState extends State<HomePlayer> {
             child: Text(
               userAuth.name,
               style: TextStyle(color: Colors.white, fontSize: 35.0),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           Container(
@@ -225,17 +248,6 @@ class _HomePlayerState extends State<HomePlayer> {
                   ],
                 ),
               )),
-          /*Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white, width: 5.0),
-            ),
-            child: QrImage(
-              backgroundColor: Colors.white,
-              data: this.userAuth.uid,
-              version: 11,
-              size: 250.0,
-            ),
-          ),*/
         ],
       ),
     );
@@ -263,7 +275,8 @@ class _HomePlayerState extends State<HomePlayer> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => UserEditPage()));
+                                builder: (context) => UserEditPage())).whenComplete(() =>
+                        {this.userAuth.getUsetAuthData().whenComplete(() => setState(() => {}))});
                       },
                       child: Container(
                         child: Column(
@@ -274,6 +287,7 @@ class _HomePlayerState extends State<HomePlayer> {
                                 color: Colors.white,
                                 fontSize: 22.0,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                             Container(
                               width: MediaQuery.of(context).size.width * 0.7,
@@ -283,7 +297,7 @@ class _HomePlayerState extends State<HomePlayer> {
                                   Padding(
                                     padding: EdgeInsets.only(right: 5.0),
                                     child: Text(
-                                      "Posiçãos: " + userAuth.positions,
+                                      "Posições: " + userAuth.positions,
                                       style: TextStyle(
                                           fontSize: 15.0, color: Colors.white),
                                       textAlign: TextAlign.left,
@@ -292,7 +306,7 @@ class _HomePlayerState extends State<HomePlayer> {
                                   Padding(
                                     padding: EdgeInsets.only(right: 5.0),
                                     child: Text(
-                                      "Jogos: 15",
+                                      "Jogos: "+this.userAuth.jogos.toString(),
                                       style: TextStyle(
                                           fontSize: 15.0, color: Colors.white),
                                       textAlign: TextAlign.left,
@@ -301,7 +315,7 @@ class _HomePlayerState extends State<HomePlayer> {
                                   Padding(
                                     padding: EdgeInsets.only(right: 5.0),
                                     child: Text(
-                                      "Gols: 3",
+                                      "Gols: "+this.userAuth.gols.toString(),
                                       style: TextStyle(
                                           fontSize: 15.0, color: Colors.white),
                                       textAlign: TextAlign.left,
@@ -310,7 +324,7 @@ class _HomePlayerState extends State<HomePlayer> {
                                   Padding(
                                     padding: EdgeInsets.only(right: 5.0),
                                     child: Text(
-                                      "Assistencias: 7",
+                                      "Assistencias: "+this.userAuth.assistencias.toString(),
                                       style: TextStyle(
                                           fontSize: 15.0, color: Colors.white),
                                       textAlign: TextAlign.left,
@@ -329,7 +343,10 @@ class _HomePlayerState extends State<HomePlayer> {
           SingleChildScrollView(
             child: StreamBuilder(
               stream:
-                  FirebaseFirestore.instance.collection("match").snapshots(),
+                  FirebaseFirestore.instance
+                      .collection("match")
+                      .where("status", isEqualTo: "confirmada")
+                      .snapshots(),
               builder: (BuildContext context, AsyncSnapshot snapshot) {
                 switch (snapshot.connectionState) {
                   case ConnectionState.waiting:
@@ -342,14 +359,26 @@ class _HomePlayerState extends State<HomePlayer> {
                       shrinkWrap: true,
                       children: snapshot.data.docs
                           .map<Widget>((DocumentSnapshot doc) {
-                        return jogo(
-                            doc.data()['nome'],
-                            doc.data()['data'],
-                            doc.data()['preco'].toString(),
-                            2,
-                            doc.id,
-                            doc.data()['status'],
-                            doc.data()['urlImage']);
+                        return Container(
+                            child: FutureBuilder(
+                              future: getFutureDados(doc.data()['estabelecimentoUid'], "Não filtrar"),
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData && snapshot.data.distance <= 50) {
+                                  return jogo(
+                                      doc.data()['nome'],
+                                      doc.data()['data'],
+                                      doc.data()['preco'].toString(),
+                                      snapshot.data.distance,
+                                      doc.id,
+                                      doc.data()['status'],
+                                      doc.data()['urlImage'],
+                                      snapshot.data.endereco);
+                                } else {
+                                  return Container();
+                                }
+                              }
+                            ),
+                          );
                       }).toList(),
                     );
                 }
@@ -363,60 +392,93 @@ class _HomePlayerState extends State<HomePlayer> {
   }
 
   Widget partidasTelas() {
-    if (this.partidas.isEmpty) {
-      return Text(
-        "Não possui partidas",
-        style: TextStyle(color: Colors.white),
-      );
-    } else {
-      return SingleChildScrollView(
-        child: Column(
-          children: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  InputChip(
-                    backgroundColor: Colors.red,
-                    label: Text('Pendentes'),
-                    onSelected: (bool value) {
-                      statusFiltro = 'pendente';
-                      setState(() {});
-                    },
-                  ),
-                  InputChip(
-                    backgroundColor: Colors.green,
-                    label: Text('Confirmadas'),
-                    onSelected: (bool value) {
-                      statusFiltro = 'confirmada';
-                      setState(() {});
-                    },
-                  ),
-                  InputChip(
-                    backgroundColor: Colors.yellow,
-                    label: Text('Em andamento'),
-                    onSelected: (bool value) {
-                      statusFiltro = 'iniciada';
-                      setState(() {});
-                    },
-                  ),
-                  InputChip(
-                    backgroundColor: Colors.white,
-                    label: Text('Finalizado'),
-                    onSelected: (bool value) {
-                      statusFiltro = 'finalizada';
-                      setState(() {});
-                    },
-                  ),
-                ],
-              ),
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          Container(
+            margin: EdgeInsets.only(left: 5.0, right: 5.0),
+            child: InputChip(
+              backgroundColor: HexColor("#8B0000"),
+              selectedColor: HexColor("#FF0000"),
+              label: Text('Pendentes'),
+              selected: selectPendente,
+              onSelected: (bool value) {
+                statusFiltro = 'pendente';
+                setState(() {
+                  selectPendente = true;
+                  selectConfirmado = false;
+                  selectIniciado = false;
+                  selectFinalizado = false;
+                });
+              },
             ),
-            historico("Partidas criadas"),
-            //historico("Partidas inscritas"),
-          ],
-        ),
-      );
-    }
+          ),
+          Container(
+            margin: EdgeInsets.only(right: 5.0),
+            child: InputChip(
+              backgroundColor: HexColor("#006400"),
+              selectedColor: HexColor("#00FF00"),
+              label: Text('Confirmadas'),
+              selected: selectConfirmado,
+              onSelected: (bool value) {
+                statusFiltro = 'confirmada';
+                setState(() {
+                  selectPendente = false;
+                  selectConfirmado = true;
+                  selectIniciado = false;
+                  selectFinalizado = false;
+                });
+              },
+            ),
+          ),
+          Container(
+            margin: EdgeInsets.only(right: 5.0),
+            child: InputChip(
+              backgroundColor: HexColor("#FFD700"),
+              selectedColor: HexColor("#FFFF00"),
+              label: Text('Em andamento'),
+              selected: selectIniciado,
+              onSelected: (bool value) {
+                statusFiltro = 'iniciada';
+                setState(() {
+                  selectPendente = false;
+                  selectConfirmado = false;
+                  selectIniciado = true;
+                  selectFinalizado = false;
+                });
+              },
+            ),
+          ),
+          Container(
+            margin: EdgeInsets.only(right: 5.0),
+            child: InputChip(
+              backgroundColor: HexColor("#A9A9A9"),
+              selectedColor: HexColor("#FFFFFF"),
+              label: Text('Finalizado'),
+              selected: selectFinalizado,
+              onSelected: (bool value) {
+                statusFiltro = 'finalizada';
+                setState(() {
+                  selectPendente = false;
+                  selectConfirmado = false;
+                  selectIniciado = false;
+                  selectFinalizado = true;
+                });
+              },
+            ),
+          )
+        ],
+      ),
+    ),
+          //historico("Partidas criadas"),
+          historico("Partidas inscritas"),
+        ],
+      ),
+    );
   }
 
   Widget historico(String dia) {
@@ -433,7 +495,7 @@ class _HomePlayerState extends State<HomePlayer> {
             child: StreamBuilder(
               stream: FirebaseFirestore.instance
                   .collection("match")
-                  .where(FieldPath.documentId, whereIn: this.partidas)
+                  //.where(FieldPath.documentId, whereIn: this.partidas)
                   .where("status", isEqualTo: statusFiltro)
                   .get()
                   .asStream(),
@@ -453,14 +515,28 @@ class _HomePlayerState extends State<HomePlayer> {
                       children: snapshot.data.docs
                           .map<Widget>((DocumentSnapshot doc) {
                         if (doc.data() != null) {
-                          return jogo(
-                              doc.data()['nome'],
-                              doc.data()['data'],
-                              doc.data()['preco'].toString(),
-                              2,
-                              doc.id,
-                              doc.data()['status'],
-                              doc.data()['urlImage']);
+
+                          return Container(
+                            child: FutureBuilder(
+                              future: getFutureDados(doc.data()['estabelecimentoUid'], doc.id),
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData && snapshot.data.jogadorInscrito) {
+                                  return jogo(
+                                      doc.data()['nome'],
+                                      doc.data()['data'],
+                                      doc.data()['preco'].toString(),
+                                      snapshot.data.distance,
+                                      doc.id,
+                                      doc.data()['status'],
+                                      doc.data()['urlImage'],
+                                      snapshot.data.endereco);
+                                } else {
+                                  return Container();
+                                }
+                              }
+                            ),
+                          );
+
                         } else {
                           return Container();
                         }
@@ -476,12 +552,55 @@ class _HomePlayerState extends State<HomePlayer> {
     );
   }
 
+  getFutureDados(String estabelecimentoUid, String matchUid) async {
+    MatchFilter estabelecimento = new MatchFilter();
+    print("Usuario: "+this.userAuth.uid);
+    if(matchUid != "Não filtrar"){
+      FirebaseFirestore
+        .instance
+        .collection("match")
+        .doc(matchUid)
+        .collection("players")
+        .get().then((value) => {
+          value.docs.forEach((element) {
+            if(element.data()['userUid'] == this.userAuth.uid){
+              estabelecimento.jogadorInscrito = true;
+            }
+          })
+      });
+      
+    }else{
+      estabelecimento.jogadorInscrito = true;
+    }
+
+    await FirebaseFirestore.instance
+        .collection('Establishment')
+        .doc(estabelecimentoUid)
+        .get()
+        .then((value) => {
+      estabelecimento.endereco = value.data()['endereco'],
+      estabelecimento.latitude = value.data()['latitude'],
+      estabelecimento.longitude = value.data()['longitude'],
+    }).whenComplete(() => {
+      estabelecimento.distance = (Geolocator.distanceBetween(LocationUser.latitude,
+                                                             LocationUser.longitude,
+                                                             estabelecimento.latitude,
+                                                             estabelecimento.longitude)/1000).round(),
+    });
+
+    return estabelecimento;
+  }
+
+
   Widget jogo(String nome, String data, String preco, int km, String id,
-      String status, String urlImage) {
+      String status, String urlImage, String endereco)  {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => DetailsMatch(matchId: id)));
+      onTap: () async {
+        await Navigator.push(context,
+            MaterialPageRoute(builder: (context) => DetailsMatch(matchId: id))).then((value) => {
+              userAuth.getUsetAuthData(),
+              setState(() { }),
+        });
         firebaseService.getMatch();
       },
       child: Card(
@@ -511,6 +630,7 @@ class _HomePlayerState extends State<HomePlayer> {
                                 fontSize: 20.0,
                                 fontWeight: FontWeight.bold,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           Row(
@@ -520,21 +640,31 @@ class _HomePlayerState extends State<HomePlayer> {
                                 child: Text(
                                   "Data: $data",
                                   style: TextStyle(fontSize: 15.0),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               Text(
                                 "${km} Km",
                                 style: TextStyle(fontSize: 13.0),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
                           Text(
+                            "Endereço: "+endereco,
+                            style: TextStyle(fontSize: 15.0),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        
+                          Text(
                             "Preço: R\$ $preco",
                             style: TextStyle(fontSize: 15.0),
+                            overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             "Status: $status",
                             style: TextStyle(fontSize: 15.0),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -550,16 +680,9 @@ class _HomePlayerState extends State<HomePlayer> {
   }
 
   Widget campoImage(String urlImage) {
-    if (urlImage != null) {
-      return Image.network(
-        urlImage,
-        height: 90.0,
-        width: 70.0,
-        fit: BoxFit.fill,
-      );
-    } else {
+    if (urlImage == null || urlImage == "") {
       return Container(
-        height: 90.0,
+        height: 100.0,
         width: 70.0,
         color: Colors.grey,
         child: Icon(
@@ -567,6 +690,13 @@ class _HomePlayerState extends State<HomePlayer> {
           size: 60.0,
           color: Colors.white,
         ),
+      );
+    } else {
+      return Image.network(
+        urlImage,
+        height: 100.0,
+        width: 70.0,
+        fit: BoxFit.fill,
       );
     }
   }
@@ -592,7 +722,6 @@ class _HomePlayerState extends State<HomePlayer> {
   }
 
   Future<void> uploadFile(String filePath) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     File file = File(filePath);
 
     await firebase_storage.FirebaseStorage.instance
@@ -653,6 +782,32 @@ class _HomePlayerState extends State<HomePlayer> {
       );
     }
   }
+
+  void _getCurrentLocation() async {
+    LocationPermission permission;
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        setState(() {
+          SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+        });
+      }else{
+        var position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+        setState(() {
+          LocationUser.longitude = position.longitude;
+          LocationUser.latitude = position.latitude;
+        });
+      }
+    }else{
+      var position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        LocationUser.longitude = position.longitude;
+        LocationUser.latitude = position.latitude;
+      });
+    }
+  }
 }
 
 Widget mensagem(String mensagem) {
@@ -660,3 +815,5 @@ Widget mensagem(String mensagem) {
     content: Text(mensagem),
   );
 }
+
+

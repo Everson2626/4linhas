@@ -7,12 +7,14 @@ class Match {
     this.nome = '';
     this.preco = '';
     this.data = '';
+    this.hora = '';
     this.status = '';
     this.uid = '';
     this.userAdm = '';
     this.estabelecimentoId = CampoRetorno.establishmentUid;
     this.campoId = CampoRetorno.campoUid;
     this.urlImage = '';
+    this.timeUid = '';
   }
 
   int id = 0;
@@ -20,6 +22,8 @@ class Match {
   String nome;
   String preco;
   String data;
+  String hora;
+  String timeUid;
   String userAdm;
   String status;
   String estabelecimentoId;

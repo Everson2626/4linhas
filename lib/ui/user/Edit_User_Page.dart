@@ -8,7 +8,6 @@ import 'package:projeto/object/User.dart';
 import 'package:projeto/ui/home_player.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
-
 class UserEditPage extends StatefulWidget {
   final String userId;
   const UserEditPage({Key key, this.userId}) : super(key: key);
@@ -54,11 +53,12 @@ class _UserEditPageState extends State<UserEditPage> {
                   Container(
                     padding: EdgeInsets.fromLTRB(0, 10, 0, 20),
                     child: GestureDetector(
-                        onTap: (){
-                          this._openGallery(context).then((value) => uploadFile(value.path));
+                        onTap: () {
+                          this
+                              ._openGallery(context)
+                              .then((value) => uploadFile(value.path));
                         },
-                        child: imagemProfile()
-                    ),
+                        child: imagemProfile()),
                   ),
                   Row(
                     children: [
@@ -78,27 +78,29 @@ class _UserEditPageState extends State<UserEditPage> {
                   ),
                   RaisedButton(
                     color: Colors.black,
-                    child: Text("Salvar", style: TextStyle(color: Colors.white),),
-                    onPressed: (){
-                      var user = FirebaseAuth.instance.currentUser.uid;
-                      FirebaseFirestore.instance
-                          .collection('User')
-                          .doc(user)
-                          .update({'nome': nome.text});
+                    child: Text(
+                      "Salvar",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () async {
+                      UserPlayer user = new UserPlayer();
+                      user.uid = FirebaseAuth.instance.currentUser.uid;
+                      user.name = nome.text;
 
-                      FirebaseFirestore.instance
-                          .collection('User')
-                          .doc(user)
-                          .collection('position')
-                          .doc('position')
-                          .update({
-                            'GO': this.GO,
-                            'ZG': this.ZG,
-                            'LT': this.LT,
-                            'MC': this.MC,
-                            'AT': this.AT
+                      await user.atualizarUsuario().whenComplete(() => {
+                            FirebaseFirestore.instance
+                                .collection('User')
+                                .doc(user.uid)
+                                .collection('position')
+                                .doc('position')
+                                .update({
+                              'GO': this.GO,
+                              'ZG': this.ZG,
+                              'LT': this.LT,
+                              'MC': this.MC,
+                              'AT': this.AT
+                            }).whenComplete(() => Navigator.pop(context)),
                           });
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => HomePlayer()));
                     },
                   )
                 ],
@@ -192,16 +194,15 @@ class _UserEditPageState extends State<UserEditPage> {
               AT = position['AT'],
             });
 
-    this.userAuth.urlImageProfile = await firebase_storage.FirebaseStorage.instance
-        .ref('image_profile/'+user)
+    this.userAuth.urlImageProfile = await firebase_storage
+        .FirebaseStorage.instance
+        .ref('image_profile/' + user)
         .getDownloadURL();
-    setState(() {
-
-    });
+    setState(() {});
   }
 
   Widget imagemProfile() {
-    if(userAuth.urlImageProfile != null){
+    if (userAuth.urlImageProfile != null) {
       return Container(
         width: 200.0,
         height: 200.0,
@@ -214,8 +215,7 @@ class _UserEditPageState extends State<UserEditPage> {
           ),
         ),
       );
-
-    }else{
+    } else {
       return Container(
         width: 200.0,
         height: 200.0,
@@ -241,13 +241,11 @@ class _UserEditPageState extends State<UserEditPage> {
   }
 
   Future<void> uploadFile(String filePath) async {
-    //SharedPreferences prefs = await SharedPreferences.getInstance();
     File file = File(filePath);
-
+    userAuth.uid = FirebaseAuth.instance.currentUser.uid;
     await firebase_storage.FirebaseStorage.instance
-        .ref('image_profile/'+userAuth.uid)
+        .ref('/image_profile/' + userAuth.uid)
         .putFile(file);
-    //prefs.setString('urlImageProfile', null);
-    this.userAuth.getUsetAuthData();
+    this.userAuth.getUsetAuthData().whenComplete(() => setState(() => {}));
   }
 }
