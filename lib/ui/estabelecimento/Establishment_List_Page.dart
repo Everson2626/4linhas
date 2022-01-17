@@ -38,16 +38,19 @@ class _EstablishmentListPageState extends State<EstablishmentListPage> {
                 scrollDirection: Axis.vertical,
                 shrinkWrap: true,
                 children: snapshot.data.docs.map<Widget>((DocumentSnapshot doc){
-
-                  return GestureDetector(
-                    onTap: (){
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => EstablishmentPage(estabelecimentoId: doc.id,)));
-                    },
-                    child: establishmentCard(
-                      doc.data()['nome'],
-                      doc.data()['endereco'],
-                    ),
-                  );
+                  if(doc.data()['endereco'] == '' || doc.data()['endereco'] == 'Selecione o endereço'){
+                    return Container();
+                  }else{
+                    return GestureDetector(
+                      onTap: (){
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => EstablishmentPage(estabelecimentoId: doc.id,)));
+                      },
+                      child: establishmentCard(
+                        doc.data()['nome'],
+                        doc.data()['endereco'],
+                      ),
+                    );
+                  }
 
                 }).toList(),
               );
@@ -79,6 +82,7 @@ Widget establishmentCard(String nome, String endereco,) {
                         padding: EdgeInsets.only(bottom: 5.0),
                         child: Text(
                           nome,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 20.0,
                             fontWeight: FontWeight.bold,
@@ -90,8 +94,9 @@ Widget establishmentCard(String nome, String endereco,) {
                           Padding(
                             padding: EdgeInsets.only(right: 5.0),
                             child: Text(
-                              "Endereço: $endereco",
+                              "Endereço: "+endereco,
                               style: TextStyle(fontSize: 15.0),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],

@@ -202,7 +202,6 @@ class FirebaseService {
                   "status": 'pendente'
                 }).then((value) {
                   var user = FirebaseAuth.instance.currentUser.uid;
-                  print(user);
                   FirebaseFirestore.instance
                       .collection('match')
                       .doc(value.id)
@@ -244,7 +243,6 @@ class FirebaseService {
   }
 
   void updateMatch(Match match) {
-    print("Id partida: "+match.uid);
     firestoreInstance.collection("match")
         .doc(match.uid)
         .get().then((value) => {
@@ -289,7 +287,6 @@ class FirebaseService {
   }
 
   void deleteMatch(String matchUid) {
-    print(matchUid);
     firestoreInstance.collection("match").doc(matchUid).delete();
   }
 
@@ -298,12 +295,6 @@ class FirebaseService {
   Widget mensagem(String mensagem) {
     final snackBar = SnackBar(
       content: Text(mensagem),
-      action: SnackBarAction(
-        label: 'Undo',
-        onPressed: () {
-          // Some code to undo the change.
-        },
-      ),
     );
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);

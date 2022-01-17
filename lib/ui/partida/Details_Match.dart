@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +7,7 @@ import 'package:projeto/object/Match.dart';
 import 'package:projeto/object/User.dart';
 import 'package:projeto/ui/partida/Edit_Match.dart';
 import 'package:projeto/service/firebaseService.dart';
+import 'package:projeto/ui/user/Friend_List.dart';
 
 
 import 'Finished_Match.dart';
@@ -37,6 +40,7 @@ class _DetailsMatchState extends State<DetailsMatch> {
       if(this.players.length > 0){
         this.listPlayerLoad = true,
         this.possuiJogadores = true,
+        setState(() => {}),
       }else{
         this.possuiJogadores = false,
       }
@@ -124,21 +128,21 @@ class _DetailsMatchState extends State<DetailsMatch> {
     );
   }
   Widget playerCard(DocumentSnapshot doc){
-    String positions = "";
-    FirebaseFirestore.instance
-        .collection('User')
-        .doc(doc.id)
-        .collection("position")
-        .doc("position")
-        .get()
-        .then((position) => {
-      if (position['GO'] == true) {positions += "GO "},
-      if (position['ZG'] == true) {positions += "ZG "},
-      if (position['LT'] == true) {positions += "LT "},
-      if (position['MC'] == true) {positions += "MC "},
-      if (position['AT'] == true) {positions += "AT "},
-      if (positions == ""){positions = "Sem posições"},
-    });
+    //String positions = "";
+    //FirebaseFirestore.instance
+    //    .collection('User')
+    //    .doc(doc.id)
+    //    .collection("position")
+    //    .doc("position")
+    //    .get()
+    //    .then((position) => {
+    //  if (position['GO'] == true) {positions += "GO "},
+    //  if (position['ZG'] == true) {positions += "ZG "},
+    //  if (position['LT'] == true) {positions += "LT "},
+    //  if (position['MC'] == true) {positions += "MC "},
+    //  if (position['AT'] == true) {positions += "AT "},
+    //  if (positions == ""){positions = "Sem posições"},
+    //});
 
     return Card(
 
@@ -161,7 +165,11 @@ class _DetailsMatchState extends State<DetailsMatch> {
                   ),
                   Divider(),
                   Text(
-                    "Posições: "+positions,
+                    "Gols: "+doc.data()['gols'].toString(),
+                    style: TextStyle(fontSize: 13.0),
+                  ),
+                  Text(
+                    "Assistencias: "+doc.data()['assistencia'].toString(),
                     style: TextStyle(fontSize: 13.0),
                   )
                 ],
@@ -216,7 +224,9 @@ class _DetailsMatchState extends State<DetailsMatch> {
                   .doc(widget.matchId)
                   .collection("players")
                   .doc(userAtualUid)
-                  .delete().whenComplete(() => setState(() {}));
+                  .delete().whenComplete(() => {
+                Timer(Duration(seconds: 1), () => {initState(),setState(() {}), print('done')}),
+              });
             },
           )
       );
@@ -226,6 +236,7 @@ class _DetailsMatchState extends State<DetailsMatch> {
   }
 
   Future<void> getUser() async{
+    this.players.clear();
     await FirebaseFirestore.instance
         .collection('match')
         .doc(widget.matchId)
@@ -288,42 +299,52 @@ class _DetailsMatchState extends State<DetailsMatch> {
       }
 
     }else{
-      return RaisedButton(
-          color: Colors.red,
-          child: Text(
-            "Increver-se",
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: 20.0
+      if(!this.players.contains(FirebaseAuth.instance.currentUser.uid)){
+        return RaisedButton(
+            color: Colors.red,
+            child: Text(
+              "Increver-se",
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20.0
+              ),
             ),
-          ),
-          onPressed: (){
-            var user = FirebaseAuth.instance.currentUser.uid;
-            FirebaseFirestore.instance
-                .collection('match')
-                .doc(widget.matchId)
-                .collection('players')
-                .doc(user)
-                .set({
-              "userUid": user
-            }).catchError((onError){
-              mensagem("Ocorreu algum erro");
-            });
+            onPressed: (){
+              var user = FirebaseAuth.instance.currentUser.uid;
+              FirebaseFirestore.instance
+                  .collection('match')
+                  .doc(widget.matchId)
+                  .collection('players')
+                  .doc(user)
+                  .set({
+                "userUid": user
+              })
+              .whenComplete(() => {
+                Timer(Duration(seconds: 1), () => {initState(),setState(() {}), print('done')}),
+              })
+              .catchError((onError){
+                mensagem("Ocorreu algum erro");
+              });
 
 
-            FirebaseFirestore.instance
-                .collection('User')
-                .doc(user)
-                .collection('matchs')
-                .doc(widget.matchId)
-                .set({
-              "matchUid": widget.matchId
-            }).then((result){
-              mensagem("Usuario cadastrado");
-            }).catchError((onError){
-              mensagem("Ocorreu algum erro");
+              FirebaseFirestore.instance
+                  .collection('User')
+                  .doc(user)
+                  .collection('matchs')
+                  .doc(widget.matchId)
+                  .set({
+                "matchUid": widget.matchId
+              }).then((result){
+                mensagem("Usuario cadastrado");
+              }).catchError((onError){
+                mensagem("Ocorreu algum erro");
+              });
             });
-          });
+
+      }else{
+        return Text("Você já está inscrito para essa partida");
+      }
+
     }
     return Container();
 
@@ -369,12 +390,6 @@ class _DetailsMatchState extends State<DetailsMatch> {
   void mensagem(String mensagem) {
     final snackBar = SnackBar(
       content: Text(mensagem),
-      action: SnackBarAction(
-        label: 'Desfazer',
-        onPressed: () {
-          // Some code to undo the change.
-        },
-      ),
     );
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -405,15 +420,36 @@ class _DetailsMatchState extends State<DetailsMatch> {
     if(this.userAuth.uid == this.match.userAdm){
       return Container(
         margin: EdgeInsets.only(right: 10.0),
-        child: IconButton(icon: Icon(Icons.edit),
-          onPressed: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => EditMatchPage(matchId: widget.matchId)));
-          },
-        ),
+        child: Row(
+          children: [
+            //IconButton(icon: Icon(Icons.person_add),
+            //  onPressed: () {
+            //    Navigator.push(context,
+            //        MaterialPageRoute(builder: (context) => FiendList(acao: 'request_match',)));
+            //  },
+            //),
+            IconButton(icon: Icon(Icons.edit),
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => EditMatchPage(matchId: widget.matchId))).whenComplete(() =>
+                  {Timer(Duration(seconds: 1), () => {this.getMatchData(), print('done')})}
+                );
+              },
+            ),
+          ],
+        )
+
       );
     }else{
-      return Container();
+      return Container(
+        margin: EdgeInsets.only(right: 10.0),
+        //child: IconButton(icon: Icon(Icons.person_add),
+        //  onPressed: () {
+        //    Navigator.push(context,
+        //        MaterialPageRoute(builder: (context) => FiendList()));
+        //  },
+        //),
+      );
     }
   }
 }

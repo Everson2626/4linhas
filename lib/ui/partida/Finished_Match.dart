@@ -56,14 +56,19 @@ class _FinishedMatchState extends State<FinishedMatch> {
                 style: TextStyle(color: Colors.black, fontSize: 25.0),
               ),
               Divider(color: Colors.black),
-              retornoTela(),
+              Expanded(
+                flex: 9,
+                child: retornoTela(),
+              ),
               RaisedButton(
                   color: Colors.black,
                   child: Text("Finalizar partida", style: TextStyle(color: Colors.white),),
                   onPressed: (){
                     this.loadDados();
                   }
-              )
+              ),
+
+
             ],
           ),
         ));
@@ -73,7 +78,6 @@ class _FinishedMatchState extends State<FinishedMatch> {
 
     if(this.listUsers.isNotEmpty && dadosCarregados){
       return SizedBox(
-        height: 500.0,
         child: ListView.builder(
           itemCount: listUsers.length,
           itemBuilder: (context, index) {
@@ -264,12 +268,6 @@ class _FinishedMatchState extends State<FinishedMatch> {
   void mensagem(String mensagem) {
     final snackBar = SnackBar(
       content: Text(mensagem),
-      action: SnackBarAction(
-        label: 'Desfazer',
-        onPressed: () {
-          // Some code to undo the change.
-        },
-      ),
     );
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);

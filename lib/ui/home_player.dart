@@ -554,7 +554,6 @@ class _HomePlayerState extends State<HomePlayer> {
 
   getFutureDados(String estabelecimentoUid, String matchUid) async {
     MatchFilter estabelecimento = new MatchFilter();
-    print("Usuario: "+this.userAuth.uid);
     if(matchUid != "Não filtrar"){
       FirebaseFirestore
         .instance

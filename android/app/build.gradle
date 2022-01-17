@@ -48,7 +48,7 @@ android {
         applicationId "com.eveluizsan.projeto"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 4
+        versionCode 9
         versionName "1.0.0"
     }
 

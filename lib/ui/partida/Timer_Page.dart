@@ -58,7 +58,6 @@ class _TimePageState extends State<TimePage> {
                 setState(() => {}),
               },
               validator: (val) {
-                print(val);
                 return null;
               },
               onSaved: (val) => print(val),
@@ -92,7 +91,6 @@ class _TimePageState extends State<TimePage> {
                             shrinkWrap: true,
                             children: snapshot.data.docs
                                 .map<Widget>((DocumentSnapshot doc) {
-                                  print(doc.data()['dia']);
                               return timeCard(doc.data()['dia'], doc.data()['hora'], doc.data()['preco'], doc.data()['Status'], doc.id);
 
                             }).toList(),
@@ -110,7 +108,6 @@ class _TimePageState extends State<TimePage> {
   }
 
   void getCampoName(){
-    print(widget.campoId);
     FirebaseFirestore
         .instance
         .collection("Establishment")
@@ -119,7 +116,6 @@ class _TimePageState extends State<TimePage> {
         .doc(widget.campoId)
         .get().then((value) => {
        this.campoName = value.data()['nome'],
-      print(value.data()['nome']),
     });
   }
 
@@ -212,12 +208,6 @@ class _TimePageState extends State<TimePage> {
   Widget mensagem(String mensagem) {
     final snackBar = SnackBar(
       content: Text(mensagem),
-      action: SnackBarAction(
-        label: 'Desfazer',
-        onPressed: () {
-          // Some code to undo the change.
-        },
-      ),
     );
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);

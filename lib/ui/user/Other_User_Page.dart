@@ -8,8 +8,9 @@ import 'package:clipboard/clipboard.dart';
 class OtherUserPage extends StatefulWidget {
   final String userId;
   final String acao;
+  final String match;
 
-  const OtherUserPage({Key key, this.userId, this.acao}) : super(key: key);
+  const OtherUserPage({Key key, this.userId, this.acao = '', this.match = ''}) : super(key: key);
 
   @override
   _OtherUserPageState createState() => _OtherUserPageState();
@@ -188,7 +189,28 @@ class _OtherUserPageState extends State<OtherUserPage> {
               mensagem("Pedido enviado");
             });
       }
-    } else {
+    } else if(widget.acao == "request_match"){
+      return RaisedButton(
+          color: Colors.white,
+          child: Container(
+            child: Text(
+              "Convidar",
+              style: TextStyle(color: Colors.black),
+            ),
+          ),
+          onPressed: () {
+            String userAuthUid = FirebaseAuth.instance.currentUser.uid;
+            FirebaseFirestore.instance
+                .collection("Request")
+                .doc(user.uid)
+                .collection("Match")
+                .doc(userAuthUid)
+                .set({"matchUid": widget.match, "playerUid": userAuthUid});
+            mensagem("Pedido enviado");
+          });
+
+    }
+    else {
       return Container();
     }
   }
@@ -196,12 +218,6 @@ class _OtherUserPageState extends State<OtherUserPage> {
   Widget mensagem(String mensagem) {
     return SnackBar(
       content: Text(mensagem),
-      action: SnackBarAction(
-        label: 'Desfazer',
-        onPressed: () {
-          // Some code to undo the change.
-        },
-      ),
     );
   }
 

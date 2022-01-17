@@ -180,12 +180,6 @@ class _CreateMatchPageState extends State<CreateMatchPage> {
   Widget mensagem(String mensagem) {
     final snackBar = SnackBar(
       content: Text(mensagem),
-      action: SnackBarAction(
-        label: 'Desfazer',
-        onPressed: () {
-          // Some code to undo the change.
-        },
-      ),
     );
 
     ScaffoldMessenger.of(context).showSnackBar(snackBar);

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:projeto/object/User.dart';
@@ -7,7 +9,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
 class FiendList extends StatefulWidget {
-  const FiendList({Key key}) : super(key: key);
+  final String acao;
+  final String matchUid;
+  const FiendList({Key key, this.acao, this.matchUid}) : super(key: key);
 
   @override
   _FiendListState createState() => _FiendListState();
@@ -41,6 +45,7 @@ class _FiendListState extends State<FiendList> {
             .collection("Friends")
             .snapshots(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
+          //if(snapshot) return Text('');
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
               LinearProgressIndicator();
@@ -51,16 +56,29 @@ class _FiendListState extends State<FiendList> {
                 shrinkWrap: true,
                 children:
                 snapshot.data.docs.map<Widget>((DocumentSnapshot doc) {
-                  print("Uid: "+doc.data()['uid']);
                   return Container(
                     child: FutureBuilder(
                         future: getFutureDados(doc.data()['uid']),
                         builder: (context, snapshot) {
-                          if (snapshot.hasData){
-                            return playerCard(snapshot.data.name, snapshot.data.uid, snapshot.data.urlImageProfile);
+                          if(snapshot.data.name != null){
+                            if(widget.acao == 'request_match'){
+                              return GestureDetector(
+                                onTap: (){
+                                  _showDialog(context);
+                                },
+                                child: playerCardMatch(snapshot.data.name, snapshot.data.uid, snapshot.data.urlImageProfile, widget.matchUid),
+                              );
+
+                            }
+                            if (snapshot.hasData){
+                              return playerCard(snapshot.data.name, snapshot.data.uid, snapshot.data.urlImageProfile);
+                            }else{
+                              return playerCard(doc.data()['nome'], doc.data()['uid'], null);
+                            }
                           }else{
-                            return playerCard(doc.data()['nome'], doc.data()['uid'], null);
+                            return Text('');
                           }
+
 
                         }
                     ),
@@ -79,7 +97,6 @@ class _FiendListState extends State<FiendList> {
 
 Widget playerCard(String nome, String uid, String image) {
   String userAuthId = FirebaseAuth.instance.currentUser.uid;
-  print(image);
   return Card(
     child: Container(
       color: Colors.lightGreen,
@@ -126,8 +143,8 @@ Widget playerCard(String nome, String uid, String image) {
                 children: [
                   GestureDetector(
                     child: Container(
-                      width: 80.0,
-                      height: 80.0,
+                      width: 60.0,
+                      height: 60.0,
                       child: Icon(
                         Icons.person_remove_sharp,
                         size: 50.0,
@@ -159,6 +176,53 @@ Widget playerCard(String nome, String uid, String image) {
       ),
     ),
   );
+}
+
+Widget playerCardMatch(String nome, String uid, String image, String matchUid) {
+  return Card(
+      child: Container(
+        color: Colors.lightGreen,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 8,
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: campoImage(image),
+                  ),
+                  Expanded(
+                    flex: 7,
+                    child: Container(
+                      padding: EdgeInsets.only(left: 5),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(bottom: 5.0),
+                            child: Text(
+                              nome,
+                              style: TextStyle(
+                                fontSize: 20.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+
+                        ],
+                      ),
+                    ),
+                  )
+
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
 }
 
 Widget mensagem(String mensagem) {
@@ -205,3 +269,47 @@ Future<UserPlayer> getFutureDados(String userUid) async {
   return userAtual;
 }
 
+_showDialog(BuildContext context)
+{
+
+  VoidCallback continueCallBack = () => {
+    Navigator.of(context).pop(),
+    // code on continue comes here
+
+  };
+  BlurryDialog  alert = BlurryDialog("Enviar convite","Deseja convidar esse jogador ?");
+
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return alert;
+    },
+  );
+}
+class BlurryDialog extends StatelessWidget {
+
+  String title;
+  String content;
+
+  BlurryDialog(this.title, this.content);
+  TextStyle textStyle = TextStyle (color: Colors.black);
+
+  @override
+  Widget build(BuildContext context) {
+    return BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        child:  AlertDialog(
+          title: new Text(title,style: textStyle,),
+          content: new Text(content, style: textStyle,),
+          actions: <Widget>[
+            new FlatButton(
+              child: Text("Sim"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ));
+  }
+}

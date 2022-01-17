@@ -59,7 +59,7 @@ class _CreateMatchPageState extends State<EditMatchPage> {
           child: Container(
             padding: EdgeInsets.all(10.0),
             color: Colors.white,
-            height: 400.0,
+            height: 350.0,
             child: Column(
               children: [
                 Container(
@@ -103,63 +103,26 @@ class _CreateMatchPageState extends State<EditMatchPage> {
                     ),
                   ),
                 ),
-                Text(
-                  "${selectedDate.toLocal()}".split(' ')[0],
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                Container(
-                  padding: EdgeInsets.only(bottom: 15.0),
-                  child: RaisedButton(
-                    onPressed: () => _selectDate(context), // Refer step 3
-                    child: Text(
-                      'date',
-                      style: TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.bold),
-                    ),
-                    color: Colors.greenAccent,
-                  ),
-                ),
                 //acaoButton()
-                Row(
-                  children: [
-                    Expanded(
-                        child: RaisedButton(
-                            color: Colors.black,
-                            child: Container(
-                              child: Text(
-                                "Salvar",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            onPressed: () {
-                              match.uid = widget.matchId;
-                              match.nome = nomeController.text;
-                              match.preco = precoController.text;
-                              match.data =
-                              "${selectedDate.toLocal()}".split(' ')[0];
-                              match.userAdm = FirebaseAuth.instance.currentUser.uid;
-                              firebaseService.updateMatch(match);
+                RaisedButton(
+                    color: Colors.black,
+                    child: Container(
+                      child: Text(
+                        "Salvar",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    onPressed: () {
+                      match.uid = widget.matchId;
+                      match.nome = nomeController.text;
+                      match.preco = precoController.text;
+                      match.data =
+                      "${selectedDate.toLocal()}".split(' ')[0];
+                      match.userAdm = FirebaseAuth.instance.currentUser.uid;
+                      firebaseService.updateMatch(match);
 
-                              Navigator.pop(context);
-                            }),
-                    ),
-                    Expanded(
-                        child: RaisedButton(
-                            color: Colors.red,
-                            child: Container(
-                              child: Text(
-                                "EXCLUIR PARTIDA",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            onPressed: () {
-                              firebaseService.deleteMatch(widget.matchId);
-                              Navigator.pushNamed(context, '/home_page');
-                            }
-                        ),
-                    ),
-                  ],
-                )
+                      Navigator.pop(context);
+                    }),
               ],
             ),
           ),
